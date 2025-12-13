@@ -15,15 +15,63 @@ class UsersController extends AbstractController
         $method = $request->getMethod();
         switch ($method) {
             case 'GET':
+                $id = $request->query->get('id');
+                if (empty($id)) {
+                    return $this->json([
+                        'error' => 'Missing required attribute',
+                        'missing' => ['id']
+                    ], 400);
+                }
+                // TODO: fetch the user by id from the database
                 return $this->json([
-                    ['id' => 1, 'name' => 'Some name'],
-                    ['id' => 2, 'name' => 'Some2 name2'],
+                    'id' => $id,
+                    'login' => 'sample', // TODO: Replace with actual user data
+                    'pass' => 'sample',  // TODO: Replace with actual user data
+                    'phone' => '12345678' // TODO: Replace with actual user data
                 ]);
             case 'POST':
-                return $this->json(['message' => 'User created'], 201);
+                $data = json_decode($request->getContent(), true);
+                $required = ['login', 'pass', 'phone'];
+                $missing = array_filter($required, fn($field) => empty($data[$field]));
+                if ($missing) {
+                    return $this->json([
+                        'error' => 'Missing required attributes',
+                        'missing' => array_values($missing)
+                    ], 400);
+                }
+                // TODO: create the user entity in the database
+                return $this->json([
+                    'message' => 'User created',
+                    'id' => 1, // Replace with actual created user ID
+                    'login' => $data['login'],
+                    'pass' => $data['pass'],
+                    'phone' => $data['phone']
+                ], 201);
             case 'PUT':
-                return $this->json(['message' => 'User updated']);
+                $data = json_decode($request->getContent(), true);
+                $required = ['id', 'login', 'pass', 'phone'];
+                $missing = array_filter($required, fn($field) => empty($data[$field]));
+                if ($missing) {
+                    return $this->json([
+                        'error' => 'Missing required attributes',
+                        'missing' => array_values($missing)
+                    ], 400);
+                }
+                // TODO: update the user entity in the database
+                return $this->json([
+                    'message' => 'User updated',
+                    'id' => $data['id']
+                ]);
             case 'DELETE':
+                $data = json_decode($request->getContent(), true);
+                $id = $data['id'] ?? null;
+                if (empty($id)) {
+                    return $this->json([
+                        'error' => 'Missing required attribute',
+                        'missing' => ['id']
+                    ], 400);
+                }
+                // TODO: delete the user by id from the database
                 return $this->json(['message' => 'User deleted']);
             default:
                 return $this->json(['error' => 'Method not allowed'], 405);
