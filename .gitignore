@@ -9,5 +9,5 @@
 /vendor/
 ###< symfony/framework-bundle ###
 
-# Ignore development environment secrets
 .env.dev
+
