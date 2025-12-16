@@ -11,9 +11,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_PHONE', fields: ['phone'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_PASSWORD', fields: ['password'])]
 #[UniqueEntity(fields: ['email'], message: 'This email is already in use')]
-#[UniqueEntity(fields: ['phone'], message: 'This phone is already in use')]
+#[UniqueEntity(fields: ['password'], message: 'This password is already in use')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -40,7 +40,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Password is required')]
     private ?string $password = null;
 
-    #[ORM\Column(length: 8, unique: true)]
+    #[ORM\Column(length: 8)]
     #[Assert\NotBlank(message: 'Phone is required')]
     #[Assert\Length(max: 8, maxMessage: 'Phone cannot be longer than {{ limit }} characters')]
     private ?string $phone = null;
