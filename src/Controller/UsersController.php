@@ -33,7 +33,6 @@ class UsersController extends AbstractController
         }
 
         return $this->json([
-            'id' => $user->getId(),
             'login' => method_exists($user, 'getLogin') ? $user->getLogin() : ($user->getEmail() ?? ''),
             'pass' => method_exists($user, 'getPass') ? $user->getPass() : ($user->getPassword() ?? ''),
             'phone' => method_exists($user, 'getPhone') ? $user->getPhone() : ''
@@ -70,15 +69,16 @@ class UsersController extends AbstractController
             'message' => 'User created',
             'id' => $user->getId(),
             'email' => $user->getEmail(),
+            'password' => $user->getPassword(), // here we're returning hashed password
             'phone' => method_exists($user, 'getPhone') ? $user->getPhone() : null
         ], 201);
     }
 
     #[Route('/v1/api/users', name: 'api_users_put', methods: ['PUT'])]
-    public function updateUser(Request $request): JsonResponse
+    public function updateUser(Request $request, UserRepository $userRepository, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $required = ['id', 'login', 'pass', 'phone'];
+        $required = ['id', 'email', 'password', 'phone'];
         $missing = array_filter($required, fn($field) => empty($data[$field]));
         if ($missing) {
             return $this->json([
@@ -86,10 +86,27 @@ class UsersController extends AbstractController
                 'missing' => array_values($missing)
             ], 400);
         }
-        // TODO: update the user entity in the database
+
+        $user = $userRepository->find($data['id']);
+        if (!$user) {
+            return $this->json([
+                'error' => 'User not found',
+                'id' => $data['id']
+            ], 404);
+        }
+
+        $user->setEmail($data['email']);
+        $hashedPassword = $userPasswordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+        if (method_exists($user, 'setPhone')) {
+            $user->setPhone($data['phone']);
+        }
+
+        $userRepository->add($user, true);
+
         return $this->json([
             'message' => 'User updated',
-            'id' => $data['id']
+            'id' => $user->getId()
         ]);
     }
 
