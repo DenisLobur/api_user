@@ -10,9 +10,36 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class UsersController extends AbstractController
 {
+    public function __construct(
+        private Security $security
+    ) {
+    }
+
+    private function isRoot(): bool
+    {
+        return $this->isGranted('ROLE_ROOT');
+    }
+
+    private function getCurrentUser(): ?User
+    {
+        $user = $this->security->getUser();
+        return $user instanceof User ? $user : null;
+    }
+
+    private function canAccessUser(int $targetUserId): bool
+    {
+        if ($this->isRoot()) {
+            return true;
+        }
+
+        $currentUser = $this->getCurrentUser();
+        return $currentUser && $currentUser->getId() === $targetUserId;
+    }
+
     #[Route('/v1/api/users/{id}', name: 'api_users_get', methods: ['GET'])]
     public function getUserById($id, UserRepository $userRepository): JsonResponse
     {
@@ -21,6 +48,16 @@ class UsersController extends AbstractController
                 'error' => 'Missing required attribute',
                 'missing' => ['id']
             ], 400);
+        }
+
+        $id = (int) $id;
+
+        // Check if user can access this resource
+        if (!$this->canAccessUser($id)) {
+            return $this->json([
+                'error' => 'Access denied',
+                'message' => 'You can only access your own user data'
+            ], 403);
         }
 
         $user = $userRepository->find($id);
@@ -52,6 +89,11 @@ class UsersController extends AbstractController
             ], 400);
         }
 
+        // Regular users can only create their own account (self-registration is allowed)
+        // Root users can create any account
+        // Note: This endpoint allows creating new users; for regular users,
+        // they can only modify their own data via PUT
+
         $user = new User();
         $user->setEmail($data['email']);
 
@@ -61,6 +103,11 @@ class UsersController extends AbstractController
 
         if (method_exists($user, 'setPhone')) {
             $user->setPhone($data['phone']);
+        }
+
+        // Set default role as ROLE_USER, only root can assign ROLE_ROOT
+        if ($this->isRoot() && isset($data['roles']) && is_array($data['roles'])) {
+            $user->setRoles($data['roles']);
         }
 
         $userRepository->add($user, true);
@@ -87,7 +134,17 @@ class UsersController extends AbstractController
             ], 400);
         }
 
-        $user = $userRepository->find($data['id']);
+        $targetUserId = (int) $data['id'];
+
+        // Check if user can access this resource
+        if (!$this->canAccessUser($targetUserId)) {
+            return $this->json([
+                'error' => 'Access denied',
+                'message' => 'You can only update your own user data'
+            ], 403);
+        }
+
+        $user = $userRepository->find($targetUserId);
         if (!$user) {
             return $this->json([
                 'error' => 'User not found',
@@ -102,6 +159,11 @@ class UsersController extends AbstractController
             $user->setPhone($data['phone']);
         }
 
+        // Only root can change roles
+        if ($this->isRoot() && isset($data['roles']) && is_array($data['roles'])) {
+            $user->setRoles($data['roles']);
+        }
+
         $userRepository->add($user, true);
 
         return $this->json([
@@ -113,6 +175,14 @@ class UsersController extends AbstractController
     #[Route('/v1/api/users', name: 'api_users_delete', methods: ['DELETE'])]
     public function deleteUser(Request $request, UserRepository $userRepository): JsonResponse
     {
+        // Only root users can delete
+        if (!$this->isRoot()) {
+            return $this->json([
+                'error' => 'Access denied',
+                'message' => 'Only root users can delete users'
+            ], 403);
+        }
+
         $data = json_decode($request->getContent(), true);
         $id = $data['id'] ?? null;
         if (empty($id)) {
