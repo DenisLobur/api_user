@@ -89,10 +89,13 @@ class UsersController extends AbstractController
             ], 400);
         }
 
-        // Regular users can only create their own account (self-registration is allowed)
-        // Root users can create any account
-        // Note: This endpoint allows creating new users; for regular users,
-        // they can only modify their own data via PUT
+        // Validate password length before hashing (max 8 characters)
+        if (strlen($data['password']) > 8) {
+            return $this->json([
+                'error' => 'Validation failed',
+                'message' => 'Password cannot be longer than 8 characters'
+            ], 400);
+        }
 
         $user = new User();
         $user->setEmail($data['email']);
@@ -131,6 +134,14 @@ class UsersController extends AbstractController
             return $this->json([
                 'error' => 'Missing required attributes',
                 'missing' => array_values($missing)
+            ], 400);
+        }
+
+        // Validate password length before hashing (max 8 characters)
+        if (strlen($data['password']) > 8) {
+            return $this->json([
+                'error' => 'Validation failed',
+                'message' => 'Password cannot be longer than 8 characters'
             ], 400);
         }
 

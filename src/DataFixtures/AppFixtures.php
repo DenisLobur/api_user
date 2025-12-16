@@ -20,9 +20,9 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Create root user
+        // Create root user (email max 8 chars)
         $rootUser = new User();
-        $rootUser->setEmail('root@test.com');
+        $rootUser->setEmail('r@rt.com');
         $rootUser->setPassword(
             $this->userPasswordHasher->hashPassword(
                 $rootUser,
@@ -39,9 +39,9 @@ class AppFixtures extends Fixture
         $rootToken->setToken('root-token-for-testing-purposes-1234567890abcdef12345678');
         $manager->persist($rootToken);
 
-        // Create regular user 1
+        // Create regular user 1 (email max 8 chars)
         $user1 = new User();
-        $user1->setEmail('test@test.com');
+        $user1->setEmail('u1@t.com');
         $user1->setPassword(
             $this->userPasswordHasher->hashPassword(
                 $user1,
@@ -57,9 +57,9 @@ class AppFixtures extends Fixture
         $token1->setToken('user1-token-for-testing-purposes-1234567890abcdef1234567');
         $manager->persist($token1);
 
-        // Create regular user 2
+        // Create regular user 2 (email max 8 chars)
         $user2 = new User();
-        $user2->setEmail('test2@test2.com');
+        $user2->setEmail('u2@t.com');
         $user2->setPassword(
             $this->userPasswordHasher->hashPassword(
                 $user2,

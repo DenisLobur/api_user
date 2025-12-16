@@ -6,9 +6,14 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_PHONE', fields: ['phone'])]
+#[UniqueEntity(fields: ['email'], message: 'This email is already in use')]
+#[UniqueEntity(fields: ['phone'], message: 'This phone is already in use')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -16,7 +21,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(length: 8, unique: true)]
+    #[Assert\NotBlank(message: 'Email is required')]
+    #[Assert\Length(max: 8, maxMessage: 'Email cannot be longer than {{ limit }} characters')]
+    #[Assert\Email(message: 'The email {{ value }} is not a valid email')]
     private ?string $email = null;
 
     /**
@@ -28,10 +36,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var string The hashed password
      */
-    #[ORM\Column]
+    #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: 'Password is required')]
     private ?string $password = null;
 
-    #[ORM\Column(length: 8)]
+    #[ORM\Column(length: 8, unique: true)]
+    #[Assert\NotBlank(message: 'Phone is required')]
+    #[Assert\Length(max: 8, maxMessage: 'Phone cannot be longer than {{ limit }} characters')]
     private ?string $phone = null;
 
     public function getId(): ?int
