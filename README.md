@@ -12,3 +12,6 @@ How to add test data to db (if needed):
 
 - test user:password that was used here:
 **root:root**
+
+- Database dump is located in the root:
+**test-db.sql** 
