@@ -9,11 +9,10 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UsersController extends AbstractController
 {
-    #[Route('/v1/api/users', name: 'api_users_get', methods: ['GET'])]
-    public function getUserById(Request $request): JsonResponse
+    #[Route('/v1/api/users/{id}', name: 'api_users_get', methods: ['GET'])]
+    public function getUserById($id): JsonResponse
     {
-        $id = $request->query->get('id');
-        if (empty($id)) {
+        if (empty($id) || !is_numeric($id)) {
             return $this->json([
                 'error' => 'Missing required attribute',
                 'missing' => ['id']
@@ -21,7 +20,7 @@ class UsersController extends AbstractController
         }
         // TODO: fetch the user by id from the database
         return $this->json([
-            'id' => $id,
+            'id' => (int)$id,
             'login' => 'sample', // TODO: Replace with actual user data
             'pass' => 'sample',  // TODO: Replace with actual user data
             'phone' => '12345678' // TODO: Replace with actual user data
