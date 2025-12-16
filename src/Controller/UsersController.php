@@ -111,7 +111,7 @@ class UsersController extends AbstractController
     }
 
     #[Route('/v1/api/users', name: 'api_users_delete', methods: ['DELETE'])]
-    public function deleteUser(Request $request): JsonResponse
+    public function deleteUser(Request $request, UserRepository $userRepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $id = $data['id'] ?? null;
@@ -121,7 +121,17 @@ class UsersController extends AbstractController
                 'missing' => ['id']
             ], 400);
         }
-        // TODO: delete the user by id from the database
+
+        $user = $userRepository->find($id);
+        if (!$user) {
+            return $this->json([
+                'error' => 'User not found',
+                'id' => $id
+            ], 404);
+        }
+
+        $userRepository->remove($user, true);
+
         return $this->json(['message' => 'User deleted']);
     }
 }
