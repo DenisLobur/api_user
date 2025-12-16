@@ -28,6 +28,7 @@ class AppFixtures extends Fixture
                 '12345678'
             )
         );
+        $user1->setPhone('+1111111');
         $manager->persist($user1);
 
         $user2 = new User();
@@ -38,6 +39,7 @@ class AppFixtures extends Fixture
                 '12345678'
             )
         );
+        $user2->setPhone('+9999999');
         $manager->persist($user2);
 
         $manager->flush();
